@@ -1,24 +1,33 @@
 import { Request, Response } from "express";
 import shortId from 'shortid';
 import { config } from "config/Constants";
+import { URLModel } from "database/model/URL";
 
 export class URLController {
     public async shorten(req: Request, response: Response): Promise<void> {
         const { originURL } = req.body
+        const url = await URLModel.findOne({originURL})
+        if(url) {
+            response.json(url)
+            return
+        }
         const hash = shortId.generate()
         const shortURL = `${config.API_URL}/${hash}`
+        const newURL = await URLModel.create({hash, shortURL, originURL})
 
-        response.json({ originURL, hash, shortURL })
+        response.json({ newURL })
     }
 
     public async redirect(req: Request, response: Response): Promise<void> {
         const { hash } = req.params
-        const url = {
-            originURL: 'https://cloud.mongodb.com/v2/61d9c16fed9380077d2c7c08#clusters',
-            hash: 'CUSD3DgEB',
-            shorURL: 'http://localhost:5000/CUSD3DgEB'
+        const url = await URLModel.findOne({hash})
+        
+        if(url) {
+            response.redirect(url.originURL)
+            return
         }
-        response.redirect(url.originURL)
+        
+        response.status(400).json({error: 'URL not found'})
     }
 }
 

@@ -1,8 +1,12 @@
 import { URLController } from 'controller/URLController'
+import { MongoConection } from 'database/MongoConection'
 import express from 'express'
 
 const api = express()
 api.use(express.json)
+
+const database = new MongoConection()
+database.connect()
 
 const urlController = new URLController()
 api.post("/shorten", urlController.shorten)
